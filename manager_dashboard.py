@@ -216,11 +216,18 @@ def show_manager_menu():
     tk.Button(R, text="Clients by City",     command=clients_by_city,     width=22).pack(pady=2)
     tk.Button(R, text="Problematic Hotels",  command=problematic_hotels,  width=22).pack(pady=2)
     tk.Button(R, text="Client Spending",     command=client_spending,     width=22).pack(pady=2)
+    tk.Button(root, text="Back to Launcher", command=return_to_main, width=15).pack(pady=10)
  
+def return_to_main():
+    root.destroy()
+    import main
+    main.main()
+
+
 def create_manager_app(main_root):
     global root
     root = main_root
-    root.title("UIC Hotel Managers")
+    root.title("UIC Hotel Manager")
     root.geometry("580x500")
     tk.Label(root, text="Enter Manager SSN:").pack(pady=10)
     global SSN_entry
@@ -228,6 +235,7 @@ def create_manager_app(main_root):
     SSN_entry.pack()
     tk.Button(root, text="Login", command=login_action, width=15).pack(pady=5)
     tk.Button(root, text="Register New Manager", command=register_manager, width=22).pack(pady=5)
+    tk.Button(root, text="Back to Launcher", command=return_to_main, width=22).pack(pady=5)
 
 
 def run_manager_app():

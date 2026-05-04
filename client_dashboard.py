@@ -314,6 +314,12 @@ def view_reviews():
             messagebox.showerror("Error", str(e))
 
 
+def return_to_main():
+    root.destroy()
+    import main
+    main.main()
+
+
 def show_client_menu():
     for widget in root.winfo_children():
         widget.destroy()
@@ -349,6 +355,7 @@ def show_client_menu():
     tk.Button(R, text="View Reviews", command=view_reviews, width=22).pack(pady=2)
 
     tk.Button(root, text="Logout", command=show_login, width=15).pack(pady=10)
+    tk.Button(root, text="Back to Launcher", command=return_to_main, width=15).pack(pady=2)
 
 
 def show_login():
@@ -362,6 +369,7 @@ def show_login():
     email_entry.pack()
     tk.Button(root, text="Login", command=login_action, width=15).pack(pady=5)
     tk.Button(root, text="Register New Client", command=register_client, width=22).pack(pady=5)
+    tk.Button(root, text="Back to Launcher", command=return_to_main, width=22).pack(pady=5)
 
 
 def create_client_app(main_root):
