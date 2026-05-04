@@ -6,7 +6,7 @@ DB_CONFIG = {
     "port":     5432,
     "dbname":   "hotel_db",
     "user":     "postgres",
-    "password": "password"
+    "password": "postgres"
 }
 
 def get_connection():
