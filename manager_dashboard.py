@@ -220,7 +220,7 @@ def show_manager_menu():
 def create_manager_app(main_root):
     global root
     root = main_root
-    root.title("UIC Hotel Manager")
+    root.title("UIC Hotel Managers")
     root.geometry("580x500")
     tk.Label(root, text="Enter Manager SSN:").pack(pady=10)
     global SSN_entry
