@@ -45,13 +45,28 @@ This application implements a normalized relational schema to handle complex bus
     }
     ```
 3.  **Launch App:**
+    The project now includes a unified launcher screen:
     ```bash
-    python manager_dashboard.py  # For Manager Access
-    python client_dashboard.py   # For Client Access
+    python main.py
+    ```
+    Then choose either **Client Login** or **Manager Login**.
+
+4.  **Alternative direct launch:**
+    If you prefer to open a dashboard directly:
+    ```bash
+    python manager_dashboard.py  # Manager Access
+    python client_dashboard.py   # Client Access
     ```
 
 ## 📁 Project Structure
+*   `main.py`: Unified launcher that lets the user choose Client or Manager login.
+*   `manager_dashboard.py`: Manager-side logic and reporting features.
+*   `client_dashboard.py`: Client-side logic for registration, searching, booking, and reviews.
+*   `db.py`: PostgreSQL connection wrapper using parameterized queries.
 *   `hotel_schema.sql`: SQL DDL script for table creation, keys, and constraints.
-*   `db.py`: Database wrapper utilizing **parameterized queries** for SQL injection protection.
-*   `manager_dashboard.py`: Manager-side logic and statistical reporting.
-*   `client_dashboard.py`: Client registration, room searching, and booking logic.
+*   `README.MD`: Project documentation and usage instructions.
+
+## 👥 Contributors
+- **Jacob Williams** ([@wjacob416-arch](https://github.com/wjacob416-arch)) — Manager dashboard & analytics (all 9 requirements)
+- **Ansh Pardeshi** — Client dashboard (registration, booking, search, reviews)
+- **Shachi Shriwastava** — Database schema, initial project setup, db.py, PostgreSQL configuration
