@@ -6,6 +6,7 @@ from utils import validate_email, date_range_valid, calculate_total_cost
 
 client_email = ""
 client_name = ""
+root = None
 
 
 def login_action():
@@ -363,8 +364,19 @@ def show_login():
     tk.Button(root, text="Register New Client", command=register_client, width=22).pack(pady=5)
 
 
-root = tk.Tk()
-root.title("UIC Hotel Client")
-root.geometry("600x520")
-show_login()
-root.mainloop()
+def create_client_app(main_root):
+    global root
+    root = main_root
+    root.title("UIC Hotel Client")
+    root.geometry("600x520")
+    show_login()
+
+
+def run_client_app():
+    local_root = tk.Tk()
+    create_client_app(local_root)
+    local_root.mainloop()
+
+
+if __name__ == "__main__":
+    run_client_app()

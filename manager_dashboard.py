@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import messagebox, simpledialog
 from db import get_connection
 
+root = None
+
 # ──────────────────────────────────────────────────────────
 # MANAGER LOGIC (All Requirements 1-9)
 # ──────────────────────────────────────────────────────────
@@ -215,9 +217,24 @@ def show_manager_menu():
     tk.Button(R, text="Problematic Hotels",  command=problematic_hotels,  width=22).pack(pady=2)
     tk.Button(R, text="Client Spending",     command=client_spending,     width=22).pack(pady=2)
  
-root = tk.Tk(); root.title("UIC Hotel Manager"); root.geometry("580x500")
-tk.Label(root, text="Enter Manager SSN:").pack(pady=10)
-SSN_entry = tk.Entry(root, width=30); SSN_entry.pack()
-tk.Button(root, text="Login", command=login_action, width=15).pack(pady=5)
-tk.Button(root, text="Register New Manager", command=register_manager, width=22).pack(pady=5)
-root.mainloop()
+def create_manager_app(main_root):
+    global root
+    root = main_root
+    root.title("UIC Hotel Manager")
+    root.geometry("580x500")
+    tk.Label(root, text="Enter Manager SSN:").pack(pady=10)
+    global SSN_entry
+    SSN_entry = tk.Entry(root, width=30)
+    SSN_entry.pack()
+    tk.Button(root, text="Login", command=login_action, width=15).pack(pady=5)
+    tk.Button(root, text="Register New Manager", command=register_manager, width=22).pack(pady=5)
+
+
+def run_manager_app():
+    local_root = tk.Tk()
+    create_manager_app(local_root)
+    local_root.mainloop()
+
+
+if __name__ == "__main__":
+    run_manager_app()
