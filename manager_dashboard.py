@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox, simpledialog
-from db import get_connection
+from db import get_connection, execute, fetchall, fetchone
 
 root = None
 
@@ -12,16 +12,13 @@ def login_action():
     """Req 1: Login"""
     ssn = SSN_entry.get()
     try:
-        conn = get_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT name FROM Managers WHERE SSN = %s", (ssn,))
-        result = cur.fetchone()
+        result = fetchone("SELECT name FROM Managers WHERE SSN = %s", (ssn,))
         if result:
             global manager_name; manager_name = result[0]
             messagebox.showinfo("Success", f"Welcome, {manager_name}!")
             show_manager_menu()
-        else: messagebox.showerror("Error", "SSN not found.")
-        cur.close(); conn.close()
+        else:
+            messagebox.showerror("Error", "SSN not found.")
     except Exception as e: messagebox.showerror("Error", str(e))
  
 def register_manager():
@@ -31,10 +28,8 @@ def register_manager():
     email = simpledialog.askstring("Register", "Enter Email:")
     if ssn and name and email:
         try:
-            conn = get_connection()
-            cur = conn.cursor()
-            cur.execute("INSERT INTO Managers (SSN, name, email) VALUES (%s, %s, %s)", (ssn, name, email))
-            conn.commit(); messagebox.showinfo("Success", "Manager Registered!"); cur.close(); conn.close()
+            execute("INSERT INTO Managers (SSN, name, email) VALUES (%s, %s, %s)", (ssn, name, email))
+            messagebox.showinfo("Success", "Manager Registered!")
         except Exception as e: messagebox.showerror("Error", str(e))
  
 def add_hotel_db():
@@ -46,10 +41,14 @@ def add_hotel_db():
     if name and st and num and city:
         try:
             conn = get_connection()
-            cur = conn.cursor()
-            cur.execute("INSERT INTO Address VALUES (%s,%s,%s) ON CONFLICT DO NOTHING", (st, num, city))
-            cur.execute("INSERT INTO Hotel (name, street_name, street_number, city) VALUES (%s,%s,%s,%s)", (name, st, num, city))
-            conn.commit(); messagebox.showinfo("Success", "Hotel Added!"); cur.close(); conn.close()
+            try:
+                cur = conn.cursor()
+                cur.execute("INSERT INTO Address VALUES (%s,%s,%s) ON CONFLICT DO NOTHING", (st, num, city))
+                cur.execute("INSERT INTO Hotel (name, street_name, street_number, city) VALUES (%s,%s,%s,%s)", (name, st, num, city))
+                conn.commit()
+            finally:
+                conn.close()
+            messagebox.showinfo("Success", "Hotel Added!")
         except Exception as e: messagebox.showerror("Error", str(e))
  
 def update_hotel_db():
@@ -58,10 +57,8 @@ def update_hotel_db():
     new_name = simpledialog.askstring("Update Hotel", "New Hotel Name:")
     if h_id and new_name:
         try:
-            conn = get_connection()
-            cur = conn.cursor()
-            cur.execute("UPDATE Hotel SET name = %s WHERE hotel_id = %s", (new_name, h_id))
-            conn.commit(); messagebox.showinfo("Success", "Hotel Updated!"); cur.close(); conn.close()
+            execute("UPDATE Hotel SET name = %s WHERE hotel_id = %s", (new_name, h_id))
+            messagebox.showinfo("Success", "Hotel Updated!")
         except Exception as e: messagebox.showerror("Error", str(e))
  
 def remove_hotel_db():
@@ -69,10 +66,8 @@ def remove_hotel_db():
     h_id = simpledialog.askinteger("Remove Hotel", "Enter Hotel ID:")
     if h_id:
         try:
-            conn = get_connection()
-            cur = conn.cursor()
-            cur.execute("DELETE FROM Hotel WHERE hotel_id = %s", (h_id,))
-            conn.commit(); messagebox.showinfo("Success", "Hotel Removed!"); cur.close(); conn.close()
+            execute("DELETE FROM Hotel WHERE hotel_id = %s", (h_id,))
+            messagebox.showinfo("Success", "Hotel Removed!")
         except Exception as e: messagebox.showerror("Error", str(e))
  
 def manage_rooms_db():
@@ -83,16 +78,14 @@ def manage_rooms_db():
     if not action_input: return
     action = action_input.lower()
     try:
-        conn = get_connection()
-        cur = conn.cursor()
         if action == 'add':
             win = simpledialog.askinteger("Rooms", "Number of Windows:")
             yr = simpledialog.askinteger("Rooms", "Renovation Year:")
             acc = simpledialog.askstring("Rooms", "Access Type (elevator/stairs):")
-            cur.execute("INSERT INTO Room VALUES (%s,%s,%s,%s,%s)", (h_id, r_num, win, yr, acc))
+            execute("INSERT INTO Room VALUES (%s,%s,%s,%s,%s)", (h_id, r_num, win, yr, acc))
         else:
-            cur.execute("DELETE FROM Room WHERE hotel_id = %s AND room_number = %s", (h_id, r_num))
-        conn.commit(); messagebox.showinfo("Success", "Room Updated!"); cur.close(); conn.close()
+            execute("DELETE FROM Room WHERE hotel_id = %s AND room_number = %s", (h_id, r_num))
+        messagebox.showinfo("Success", "Room Updated!")
     except Exception as e: messagebox.showerror("Error", str(e))
  
 def remove_client_db():
@@ -100,10 +93,8 @@ def remove_client_db():
     email = simpledialog.askstring("Remove Client", "Enter Client Email:")
     if email:
         try:
-            conn = get_connection()
-            cur = conn.cursor()
-            cur.execute("DELETE FROM Client WHERE email = %s", (email,))
-            conn.commit(); messagebox.showinfo("Success", "Client Removed!"); cur.close(); conn.close()
+            execute("DELETE FROM Client WHERE email = %s", (email,))
+            messagebox.showinfo("Success", "Client Removed!")
         except Exception as e: messagebox.showerror("Error", str(e))
  
 def view_top_k():
@@ -111,42 +102,33 @@ def view_top_k():
     k = simpledialog.askinteger("Top-K", "Enter value for K:")
     if k:
         try:
-            conn = get_connection()
-            cur = conn.cursor()
-            cur.execute("""SELECT c.name, c.email, COUNT(b.booking_id) 
-                FROM Client c, Booking b WHERE c.email = b.email 
-                GROUP BY c.name, c.email 
+            res = fetchall("""SELECT c.name, c.email, COUNT(b.booking_id)
+                FROM Client c, Booking b WHERE c.email = b.email
+                GROUP BY c.name, c.email
                 ORDER BY COUNT(b.booking_id) DESC LIMIT %s""", (k,))
-            res = cur.fetchall()
             output = "\n".join([f"{r[0]} ({r[1]}): {r[2]} bookings" for r in res])
-            messagebox.showinfo(f"Top {k} Clients", output if res else "No data."); cur.close(); conn.close()
+            messagebox.showinfo(f"Top {k} Clients", output if res else "No data.")
         except Exception as e: messagebox.showerror("Error", str(e))
  
 def view_room_stats():
     """Req 5: All Rooms with Number of Bookings"""
     try:
-        conn = get_connection()
-        cur = conn.cursor()
-        cur.execute("""SELECT h.name, r.room_number,
+        res = fetchall("""SELECT h.name, r.room_number,
             (SELECT COUNT(*) FROM Booking b WHERE b.hotel_id = r.hotel_id AND b.room_number = r.room_number)
             FROM Hotel h, Room r WHERE h.hotel_id = r.hotel_id""")
-        res = cur.fetchall()
         output = "\n".join([f"{r[0]} Room {r[1]}: {r[2]} bookings" for r in res])
-        messagebox.showinfo("Room Stats", output if res else "No rooms."); cur.close(); conn.close()
+        messagebox.showinfo("Room Stats", output if res else "No rooms.")
     except Exception as e: messagebox.showerror("Error", str(e))
  
 def hotel_stats():
     """Req 6: Hotel Name, Total Bookings, Avg Rating"""
     try:
-        conn = get_connection()
-        cur = conn.cursor()
-        cur.execute("""SELECT h.name,
+        res = fetchall("""SELECT h.name,
             (SELECT COUNT(*) FROM Booking b WHERE b.hotel_id = h.hotel_id),
             (SELECT AVG(r.rating) FROM Review r WHERE r.hotel_id = h.hotel_id)
             FROM Hotel h""")
-        res = cur.fetchall()
         output = "\n".join([f"{r[0]}: {r[1]} bookings, Rating: {round(r[2],1) if r[2] else 'N/A'}" for r in res])
-        messagebox.showinfo("Hotel Stats", output if res else "No hotels."); cur.close(); conn.close()
+        messagebox.showinfo("Hotel Stats", output if res else "No hotels.")
     except Exception as e: messagebox.showerror("Error", str(e))
  
 def clients_by_city():
@@ -155,39 +137,30 @@ def clients_by_city():
     c2 = simpledialog.askstring("Search", "Hotel City (C2):")
     if c1 and c2:
         try:
-            conn = get_connection()
-            cur = conn.cursor()
-            cur.execute("""SELECT DISTINCT c.name, c.email FROM Client c, Client_Address ca, Booking b, Hotel h
+            res = fetchall("""SELECT DISTINCT c.name, c.email FROM Client c, Client_Address ca, Booking b, Hotel h
                 WHERE c.email = ca.email AND c.email = b.email AND b.hotel_id = h.hotel_id
                 AND ca.city = %s AND h.city = %s""", (c1, c2))
-            res = cur.fetchall()
             output = "\n".join([f"{r[0]} ({r[1]})" for r in res])
-            messagebox.showinfo("Results", output if res else "No matches."); cur.close(); conn.close()
+            messagebox.showinfo("Results", output if res else "No matches.")
         except Exception as e: messagebox.showerror("Error", str(e))
  
 def problematic_hotels():
     """Req 8: Problematic Chicago Hotels"""
     try:
-        conn = get_connection()
-        cur = conn.cursor()
-        cur.execute("""SELECT h.name FROM Hotel h WHERE h.city = 'Chicago'
+        res = fetchall("""SELECT h.name FROM Hotel h WHERE h.city = 'Chicago'
             AND (SELECT AVG(rating) FROM Review WHERE hotel_id = h.hotel_id) < 2
             AND 2 <= (SELECT COUNT(DISTINCT b.email) FROM Booking b WHERE b.hotel_id = h.hotel_id
             AND b.email NOT IN (SELECT email FROM Client_Address WHERE city = 'Chicago'))""")
-        res = cur.fetchall()
-        messagebox.showinfo("Problematic Hotels", "\n".join([r[0] for r in res]) if res else "None found."); cur.close(); conn.close()
+        messagebox.showinfo("Problematic Hotels", "\n".join([r[0] for r in res]) if res else "None found.")
     except Exception as e: messagebox.showerror("Error", str(e))
  
 def client_spending():
     """Req 9: Client Spending Report"""
     try:
-        conn = get_connection()
-        cur = conn.cursor()
-        cur.execute("""SELECT c.name, SUM(b.price_per_day * (b.end_date - b.start_date))
+        res = fetchall("""SELECT c.name, SUM(b.price_per_day * (b.end_date - b.start_date))
             FROM Client c, Booking b WHERE c.email = b.email GROUP BY c.name ORDER BY 2 DESC""")
-        res = cur.fetchall()
         output = "\n".join([f"{r[0]}: ${r[1]}" for r in res])
-        messagebox.showinfo("Spending Report", output if res else "No data."); cur.close(); conn.close()
+        messagebox.showinfo("Spending Report", output if res else "No data.")
     except Exception as e: messagebox.showerror("Error", str(e))
  
 # ──────────────────────────────────────────────────────────
